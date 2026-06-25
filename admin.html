@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <title>TAP - Admin Panel</title>
+    <style>
+        body { font-family: 'Courier New', monospace; background: #0d0d0d; color: #00ff00; padding: 50px; text-align: center; }
+        .panel-box { border: 1px solid #00ff00; display: inline-block; padding: 30px; box-shadow: 0 0 15px #00ff00; background: #000; }
+        input, textarea, button { display: block; margin: 15px auto; padding: 10px; width: 350px; background: #000; border: 1px solid #00ff00; color: #00ff00; border-radius: 3px; }
+        button { background: #00ff00; color: #000; font-weight: bold; cursor: pointer; }
+        button:hover { background: #008800; color: #fff; }
+        #adminContent { display: none; }
+    </style>
+</head>
+<body>
+
+<div id="loginForm" class="panel-box">
+    <h2>[ ADMIN GİRİŞİ ]</h2>
+    <input type="password" id="adminPass" placeholder="Admin Şifrəsini Daxil Edin">
+    <button onclick="checkAdminPass()">DAXİL OL</button>
+</div>
+
+<div id="adminContent" class="panel-box">
+    <h2>[ TAP - ADMİN İDARƏ PANELİ ]</h2>
+    <input type="text" id="targetName" placeholder="Ad Soyad (Məs: Elvin Məmmədov)">
+    <input type="text" id="targetPhone" placeholder="Telefon Nömrəsi">
+    <input type="text" id="targetCity" placeholder="Yaşadığı Yer / Şəhər">
+    <input type="text" id="targetCar" placeholder="Maşını (Varsa markası/nömrəsi, yoxdursa 'Yoxdur')">
+    <textarea id="fakeResult" placeholder="Əlavə Məxfi Qeyd və ya Zarafat Mətni..." rows="4"></textarea>
+    <button onclick="saveToDatabase()">MƏLUMATLARI BAZAYA VUR</button>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script>
+    const firebaseConfig = { databaseURL: "SƏNİN_FIREBASE_DATABASE_URL_UNVANIN" };
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    // Admin Şifrə Yoxlanışı
+    function checkAdminPass() {
+        let pass = document.getElementById('adminPass').value;
+        if(pass === "Orman511_Sakso") {
+            document.getElementById('loginForm').style.display = "none";
+            document.getElementById('adminContent').style.display = "block";
+        } else {
+            alert("Yalnış Admin Şifrəsi!");
+        }
+    }
+
+    // Bazaya Yazma Funksiyası
+    function saveToDatabase() {
+        let name = document.getElementById('targetName').value.trim();
+        let phone = document.getElementById('targetPhone').value.trim();
+        let city = document.getElementById('targetCity').value.trim();
+        let car = document.getElementById('targetCar').value.trim();
+        let info = document.getElementById('fakeResult').value.trim();
+        
+        if(!name) return alert("Ən azından Ad Soyad yazılmalıdır!");
+
+        let key = name.toLowerCase().replace(/\s+/g, '_');
+        
+        database.ref('targets/' + key).set({
+            fullname: name,
+            phone: phone || "Məlumat yoxdur",
+            city: city || "Məlumat yoxdur",
+            car: car || "Yoxdur",
+            fake_info: info || "Məxfi qeyd daxil edilməyib."
+        }).then(() => {
+            alert("Məlumatlar TAP bazasına uğurla yazıldı!");
+            // Sahələri təmizlə
+            document.getElementById('targetName').value = "";
+            document.getElementById('targetPhone').value = "";
+            document.getElementById('targetCity').value = "";
+            document.getElementById('targetCar').value = "";
+            document.getElementById('fakeResult').value = "";
+        });
+    }
+</script>
+</body>
+</html>
