@@ -6,28 +6,41 @@
     <title>TAP - Məxfi Axtarış Sistemi</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background-color: #050000; color: #ff0000; font-family: 'Courier New', monospace; overflow: hidden; height: 100vh; display: flex; justify-content: center; align-items: center; }
+        body { 
+            background: #050000 url('https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?q=80&w=1920&auto=format&fit=crop') no-repeat center center fixed; 
+            background-size: cover;
+            color: #ff0000; 
+            font-family: 'Courier New', monospace; 
+            height: 100vh; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+        }
         
-        /* Arxa fonda qırmızı haker kodları effekti */
-        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; opacity: 0.15; }
+        /* Şəklin üstünə qırmızı haker effekti vermək üçün tünd qat */
+        body::before {
+            content: "";
+            position: absolute;
+            top:0; left:0; width:100%; height:100%;
+            background: rgba(15, 0, 0, 0.75);
+            z-index: 1;
+        }
 
-        .box { border: 2px solid #ff0000; padding: 30px; box-shadow: 0 0 25px #ff0000; background: rgba(10, 0, 0, 0.9); width: 450px; z-index: 2; position: relative; border-radius: 5px; text-align: center; }
+        .box { border: 2px solid #ff0000; padding: 30px; box-shadow: 0 0 25px #ff0000; background: rgba(5, 0, 0, 0.9); width: 100%; max-width: 480px; z-index: 2; position: relative; border-radius: 5px; text-align: center; }
         h2 { text-shadow: 0 0 10px #ff0000; margin-bottom: 15px; letter-spacing: 2px; }
         p { color: #ff9999; margin-bottom: 20px; font-size: 14px; }
-        input { background: #000; border: 1px solid #ff0000; color: #ff3333; padding: 12px; font-size: 16px; width: 90%; text-align: center; margin-bottom: 15px; outline: none; box-shadow: inset 0 0 5px #ff0000; }
-        button { background: #ff0000; color: #000; border: none; padding: 12px 25px; font-size: 16px; cursor: pointer; font-weight: bold; width: 90%; letter-spacing: 1px; transition: 0.3s; }
+        input { background: #000; border: 1px solid #ff0000; color: #ff3333; padding: 12px; font-size: 16px; width: 100%; text-align: center; margin-bottom: 15px; outline: none; box-shadow: inset 0 0 5px #ff0000; }
+        button { background: #ff0000; color: #000; border: none; padding: 12px 25px; font-size: 16px; cursor: pointer; font-weight: bold; width: 100%; letter-spacing: 1px; transition: 0.3s; }
         button:hover { background: #990000; color: #fff; box-shadow: 0 0 15px #ff0000; }
         #siteContent, #loading, #result { display: none; }
         .critical { color: #ff0000; font-weight: bold; text-shadow: 0 0 8px #ff0000; margin-bottom: 10px; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; color: #fff; text-align: left; background: rgba(20,0,0,0.5); }
-        th, td { padding: 10px; border: 1px solid #ff0000; font-size: 14px; }
-        th { color: #ff0000; background: #200000; }
+        th, td { padding: 8px; border: 1px solid #ff0000; font-size: 13px; word-break: break-all; }
+        th { color: #ff0000; background: #200000; width: 35%; }
         .system-note { margin-top: 15px; border-top: 1px dashed #ff0000; padding-top: 10px; color: #ffcc00; text-align: left; font-size: 13px; }
     </style>
 </head>
 <body>
-
-<canvas id="hackercanvas"></canvas>
 
 <div id="authBox" class="box">
     <h2>[ ACCESS DENIED ]</h2>
@@ -41,19 +54,20 @@
     <p>Şəxsin ad və soyadını mərkəzi bazadan axtarın:</p>
     <input type="text" id="searchName" placeholder="Məs: Elvin Məmmədov">
     <button onclick="startScan()">BAZADA AXTAR</button>
-    <div id="loading" style="margin-top: 20px;"></div>
+    <div id="loading" style="margin-top: 20px; font-weight: bold;"></div>
     <div id="result"></div>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-<script>
-    // ⚠️ BURA ÖZ FIREBASE LINKINI QOYMALISAN (Aşağıda izah etmişəm)
-    const firebaseConfig = { databaseURL: "SƏNİN_FIREBASE_DATABASE_URL_UNVANIN" };
-    firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    function verifyAccess() {
+    // ⚠️ BURANI ÖZ FIREBASE LINKINLƏ DƏYİŞ!
+    const firebaseConfig = { databaseURL: "SƏNİN_FIREBASE_DATABASE_URL_UNVANIN" };
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    window.verifyAccess = function() {
         let code = document.getElementById('accessCode').value.trim();
         if(code === "Sakso3169_LMNRAHH66") {
             document.getElementById('authBox').style.display = "none";
@@ -63,7 +77,7 @@
         }
     }
 
-    function startScan() {
+    window.startScan = function() {
         let searchName = document.getElementById('searchName').value.trim();
         if(!searchName) return alert("Ad soyad daxil edin!");
 
@@ -72,7 +86,7 @@
         resultDiv.style.display = "none";
         loadingDiv.style.display = "block";
 
-        let steps = ["Məxfi serverlərə qoşulur...", "Qırmızı verilənlər bazası filtrlənir...", "Arxiv faylları çəkilir..."];
+        let steps = ["Məxfi serverlərə qoşulur...", "Sosial şəbəkə profilləri çəkilir...", "Arxiv faylları yüklənir..."];
         let currentStep = 0;
         let interval = setInterval(() => {
             if(currentStep < steps.length) {
@@ -91,52 +105,31 @@
         let resultDiv = document.getElementById('result');
         resultDiv.style.display = "block";
 
-        database.ref('targets/' + key).once('value').then((snapshot) => {
+        const dbRef = ref(database, 'targets/' + key);
+        get(dbRef).then((snapshot) => {
             if (snapshot.exists()) {
                 let data = snapshot.val();
                 resultDiv.innerHTML = `
                     <h3 class="critical">⚠️ FAAL DATA TAPILDI ⚠️</h3>
                     <table>
-                        <tr><th>Parametr</th><th>Məlumat</th></tr>
-                        <tr><td>Ad Soyad</td><td>${data.fullname}</td></tr>
-                        <tr><td>Telefon</td><td>${data.phone}</td></tr>
-                        <tr><td>Yaşayış Yeri</td><td>${data.city}</td></tr>
-                        <tr><td>Nəqliyyat</td><td>${data.car}</td></tr>
+                        <tr><th>Ad Soyad</th><td>${data.fullname}</td></tr>
+                        <tr><th>Telefon</th><td>${data.phone || 'Yoxdur'}</td></tr>
+                        <tr><th>Yaşayış Yeri</th><td>${data.city || 'Yoxdur'}</td></tr>
+                        <tr><th>Nəqliyyat</th><td>${data.car || 'Yoxdur'}</td></tr>
+                        <tr><th>Instagram</th><td>${data.instagram || 'Yoxdur'}</td></tr>
+                        <tr><th>TikTok</th><td>${data.tiktok || 'Yoxdur'}</td></tr>
+                        <tr><th>Telegram</th><td>${data.telegram || 'Yoxdur'}</td></tr>
+                        <tr><th>Facebook</th><td>${data.facebook || 'Yoxdur'}</td></tr>
                     </table>
-                    <div class="system-note"><b>Məxfi Qeyd:</b> ${data.fake_info}</div>`;
+                    <div class="system-note"><b>Məxfi Qeyd:</b> ${data.fake_info || 'Yoxdur'}</div>`;
             } else {
-                resultDiv.innerHTML = `<h3 style="color: #ff0000; margin-top:15px;">❌ NETİCƏ TAPILMADI ❌</h3><p style="font-size:12px;">Bu şəxs mərkəzi qırmızı bazada qeydiyyatda deyil.</p>`;
+                resultDiv.innerHTML = `<h3 style="color: #ff0000; margin-top:15px;">❌ NETİCƏ TAPILMADI ❌</h3><p style="font-size:12px;">Bu şəxs mərkəzi bazada tapılmadı.</p>`;
             }
         }).catch(err => {
-            alert("Baza bağlantısı qurula bilmədi! Zəhmət olmasa Firebase URL-ni kodda düzgün qeyd edin.");
+            console.error(err);
+            alert("Baza xətası! Firebase URL-ni index.html-də düzgün qoyduğundan əmin ol.");
         });
     }
-
-    // Arxa fondakı Qırmızı Haker Kod Matrisi Animasiyası
-    const canvas = document.getElementById('hackercanvas');
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    const katakana = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ☠☣☣⚙⚡";
-    const alphabet = katakana.split("");
-    const fontSize = 16;
-    const columns = canvas.width / fontSize;
-    const rainDrops = [];
-    for (let x = 0; x < columns; x++) { rainDrops[x] = 1; }
-    const draw = () => {
-        ctx.fillStyle = 'rgba(5, 0, 0, 0.05)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#ff0000';
-        ctx.font = fontSize + 'px monospace';
-        for (let i = 0; i < rainDrops.length; i++) {
-            const text = alphabet[Math.floor(Math.random() * alphabet.length)];
-            ctx.fillText(text, i * fontSize, rainDrops[i] * fontSize);
-            if (rainDrops[i] * fontSize > canvas.height && Math.random() > 0.975) { rainDrops[i] = 0; }
-            rainDrops[i]++;
-        }
-    };
-    setInterval(draw, 30);
-    window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
 </script>
 </body>
 </html>
