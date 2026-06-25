@@ -5,14 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TAP - Qırmızı Admin Panel</title>
     <style>
-        body { font-family: 'Courier New', monospace; background: #0a0000; color: #ff0000; padding: 30px; text-align: center; }
-        .panel-box { border: 2px solid #ff0000; display: inline-block; padding: 30px; box-shadow: 0 0 20px #ff0000; background: #000; width: 100%; max-width: 420px; margin-top: 50px; border-radius: 5px; }
-        h2 { text-shadow: 0 0 10px #ff0000; margin-bottom: 20px; }
-        input, textarea, button { display: block; margin: 15px auto; padding: 12px; width: 100%; background: #000; border: 1px solid #ff0000; color: #ff3333; border-radius: 3px; outline: none; }
+        body { font-family: 'Courier New', monospace; background: #0a0000; color: #ff0000; padding: 20px; text-align: center; }
+        .panel-box { border: 2px solid #ff0000; display: inline-block; padding: 25px; box-shadow: 0 0 20px #ff0000; background: #000; width: 100%; max-width: 440px; margin-top: 20px; border-radius: 5px; }
+        h2 { text-shadow: 0 0 10px #ff0000; margin-bottom: 15px; }
+        input, textarea, button { display: block; margin: 12px auto; padding: 10px; width: 100%; background: #000; border: 1px solid #ff0000; color: #ff3333; border-radius: 3px; outline: none; }
         input:focus, textarea:focus { box-shadow: 0 0 8px #ff0000; }
-        button { background: #ff0000; color: #000; font-weight: bold; cursor: pointer; letter-spacing: 1px; transition: 0.3s; }
-        button:hover { background: #990000; color: #fff; box-shadow: 0 0 10px #ff0000; }
+        button { background: #ff0000; color: #000; font-weight: bold; cursor: pointer; letter-spacing: 1px; }
+        button:hover { background: #990000; color: #fff; }
         #adminContent { display: none; }
+        .sep { border-top: 1px dashed #ff0000; margin: 15px 0; padding-top: 10px; color: #ff9999; font-size: 12px; }
     </style>
 </head>
 <body>
@@ -24,52 +25,79 @@
 </div>
 
 <div id="adminContent" class="panel-box">
-    <h2>[ TAP - CENTRAL CONTROL ]</h2>
-    <input type="text" id="targetName" placeholder="Ad Soyad">
+    <h2>[ TAP - CONTROL PANEL ]</h2>
+    <input type="text" id="targetName" placeholder="Ad Soyad (Məcburidir)">
     <input type="text" id="targetPhone" placeholder="Telefon Nömrəsi">
     <input type="text" id="targetCity" placeholder="Yaşadığı Yer">
     <input type="text" id="targetCar" placeholder="Maşını (Marka/Nömrə)">
-    <textarea id="fakeResult" placeholder="Zarafat Qeydi və ya Məxfi Mətn..." rows="4"></textarea>
+    
+    <div class="sep">[ SOSİAL ŞƏBƏKƏLƏR ]</div>
+    <input type="text" id="targetInsta" placeholder="Instagram (Məs: @user)">
+    <input type="text" id="targetTikTok" placeholder="TikTok">
+    <input type="text" id="targetTg" placeholder="Telegram">
+    <input type="text" id="targetFb" placeholder="Facebook">
+    
+    <div class="sep">[ ZARAFAT MƏTNİ ]</div>
+    <textarea id="fakeResult" placeholder="Şəxs haqqında çıxacaq gizli gülməli qeyd..." rows="3"></textarea>
     <button onclick="saveToDatabase()">MƏLUMATI BAZAYA VUR</button>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-<script>
-    // ⚠️ BURA DA HƏMİN FIREBASE LINKINI QOYMALISAN
-    const firebaseConfig = { databaseURL: "SƏNİN_FIREBASE_DATABASE_URL_UNVANIN" };
-    firebase.initializeApp(firebaseConfig);
-    const database = firebase.database();
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    function checkAdminPass() {
+    // ⚠️ BURANI DA ÖZ FIREBASE LINKINLƏ DƏYİŞ!
+    const firebaseConfig = { databaseURL: "SƏNİN_FIREBASE_DATABASE_URL_UNVANIN" };
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    window.checkAdminPass = function() {
         if(document.getElementById('adminPass').value === "Orman511_Sakso") {
             document.getElementById('loginForm').style.display = "none";
             document.getElementById('adminContent').style.display = "block";
         } else { alert("YALNIŞ ŞİFRƏ!"); }
     }
 
-    function saveToDatabase() {
+    window.saveToDatabase = function() {
         let name = document.getElementById('targetName').value.trim();
         let phone = document.getElementById('targetPhone').value.trim();
         let city = document.getElementById('targetCity').value.trim();
         let car = document.getElementById('targetCar').value.trim();
+        let insta = document.getElementById('targetInsta').value.trim();
+        let tiktok = document.getElementById('targetTikTok').value.trim();
+        let tg = document.getElementById('targetTg').value.trim();
+        let fb = document.getElementById('targetFb').value.trim();
         let info = document.getElementById('fakeResult').value.trim();
         
-        if(!name) return alert("Ad Soyad məcburidir!");
+        if(!name) return alert("Ad Soyad yazmaq məcburidir!");
 
         let key = name.toLowerCase().replace(/\s+/g, '_');
         
-        database.ref('targets/' + key).set({
-            fullname: name, phone: phone || "Yoxdur", city: city || "Yoxdur", car: car || "Yoxdur", fake_info: info || "Məlumat yoxdur."
+        set(ref(database, 'targets/' + key), {
+            fullname: name,
+            phone: phone || "Məlumat yoxdur",
+            city: city || "Məlumat yoxdur",
+            car: car || "Yoxdur",
+            instagram: insta || "Tapılmadı",
+            tiktok: tiktok || "Tapılmadı",
+            telegram: tg || "Tapılmadı",
+            facebook: fb || "Tapılmadı",
+            fake_info: info || "Məxfi status təyin edilməyib."
         }).then(() => {
-            alert("Məlumat Qırmızı Bazaya Yazıldı!");
+            alert("Məlumat uğurla bazaya vuruldu!");
+            // Formu təmizlə
             document.getElementById('targetName').value = "";
             document.getElementById('targetPhone').value = "";
             document.getElementById('targetCity').value = "";
             document.getElementById('targetCar').value = "";
+            document.getElementById('targetInsta').value = "";
+            document.getElementById('targetTikTok').value = "";
+            document.getElementById('targetTg').value = "";
+            document.getElementById('targetFb').value = "";
             document.getElementById('fakeResult').value = "";
         }).catch(err => {
-            alert("Xəta baş verdi! Firebase URL-nin düzgün olduğundan və icazələrin açıq olduğundan əmin olun.");
+            console.error(err);
+            alert("Xəta! Firebase linkini admin.html-də düzgün qurduğundan əmin ol.");
         });
     }
 </script>
