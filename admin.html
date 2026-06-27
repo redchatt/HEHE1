@@ -6,14 +6,18 @@
     <title>TAP - Qırmızı Admin Panel</title>
     <style>
         body { font-family: 'Courier New', monospace; background: #0a0000; color: #ff0000; padding: 20px; text-align: center; }
-        .panel-box { border: 2px solid #ff0000; display: inline-block; padding: 25px; box-shadow: 0 0 20px #ff0000; background: #000; width: 100%; max-width: 440px; margin-top: 20px; border-radius: 5px; }
+        .panel-box { border: 2px solid #ff0000; display: inline-block; padding: 25px; box-shadow: 0 0 20px #ff0000; background: #000; width: 100%; max-width: 460px; margin-top: 20px; border-radius: 5px; vertical-align: top; }
         h2 { text-shadow: 0 0 10px #ff0000; margin-bottom: 15px; }
         input, textarea, button { display: block; margin: 12px auto; padding: 10px; width: 100%; background: #000; border: 1px solid #ff0000; color: #ff3333; border-radius: 3px; outline: none; }
-        input:focus, textarea:focus { box-shadow: 0 0 8px #ff0000; }
         button { background: #ff0000; color: #000; font-weight: bold; cursor: pointer; letter-spacing: 1px; }
         button:hover { background: #990000; color: #fff; }
-        #adminContent { display: none; }
+        #adminContent, #targetListContainer { display: none; }
         .sep { border-top: 1px dashed #ff0000; margin: 15px 0; padding-top: 10px; color: #ff9999; font-size: 12px; }
+        
+        /* Siyahı üslubları */
+        .item-row { background: #110000; border: 1px solid #ff0000; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; text-align: left; }
+        .del-btn { background: #ff0000; color: #000; border: none; padding: 5px 10px; font-weight: bold; cursor: pointer; width: auto; margin: 0; }
+        .del-btn:hover { background: #990000; color: #fff; }
     </style>
 </head>
 <body>
@@ -25,36 +29,42 @@
 </div>
 
 <div id="adminContent" class="panel-box">
-    <h2>[ TAP - CONTROL PANEL ]</h2>
+    <h2>[ CONTROL PANEL ]</h2>
     <input type="text" id="targetName" placeholder="Ad Soyad (Məcburidir)">
     <input type="text" id="targetPhone" placeholder="Telefon Nömrəsi">
     <input type="text" id="targetCity" placeholder="Yaşadığı Yer">
-    <input type="text" id="targetCar" placeholder="Maşını (Marka/Nömrə)">
+    <input type="text" id="targetCar" placeholder="Maşın Nömrəsi / Markası">
     
     <div class="sep">[ SOSİAL ŞƏBƏKƏLƏR ]</div>
-    <input type="text" id="targetInsta" placeholder="Instagram (Məs: @user)">
+    <input type="text" id="targetInsta" placeholder="Instagram">
     <input type="text" id="targetTikTok" placeholder="TikTok">
     <input type="text" id="targetTg" placeholder="Telegram">
     <input type="text" id="targetFb" placeholder="Facebook">
     
     <div class="sep">[ ZARAFAT MƏTNİ ]</div>
-    <textarea id="fakeResult" placeholder="Şəxs haqqında çıxacaq gizli gülməli qeyd..." rows="3"></textarea>
+    <textarea id="fakeResult" placeholder="Çıxacaq gizli qeyd..." rows="3"></textarea>
     <button onclick="saveToDatabase()">MƏLUMATI BAZAYA VUR</button>
+</div>
+
+<div id="targetListContainer" class="panel-box" style="max-width: 500px; margin-left: 15px;">
+    <h2>[ BAZADAKI ŞƏXSLƏR ]</h2>
+    <div id="listRows"></div>
 </div>
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, set, remove, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // ⚠️ BURANI DA ÖZ FIREBASE LINKINLƏ DƏYİŞ!
-    const firebaseConfig = { databaseURL: "SƏNİN_FIREBASE_DATABASE_URL_UNVANIN" };
+    const firebaseConfig = { databaseURL: "https://aahh-631a5-default-rtdb.firebaseio.com/" };
     const app = initializeApp(firebaseConfig);
     const database = getDatabase(app);
 
     window.checkAdminPass = function() {
         if(document.getElementById('adminPass').value === "Orman511_Sakso") {
             document.getElementById('loginForm').style.display = "none";
-            document.getElementById('adminContent').style.display = "block";
+            document.getElementById('adminContent').style.display = "inline-block";
+            document.getElementById('targetListContainer').style.display = "inline-block";
+            loadTargetList();
         } else { alert("YALNIŞ ŞİFRƏ!"); }
     }
 
@@ -70,35 +80,52 @@
         let info = document.getElementById('fakeResult').value.trim();
         
         if(!name) return alert("Ad Soyad yazmaq məcburidir!");
-
         let key = name.toLowerCase().replace(/\s+/g, '_');
         
         set(ref(database, 'targets/' + key), {
-            fullname: name,
-            phone: phone || "Məlumat yoxdur",
-            city: city || "Məlumat yoxdur",
-            car: car || "Yoxdur",
-            instagram: insta || "Tapılmadı",
-            tiktok: tiktok || "Tapılmadı",
-            telegram: tg || "Tapılmadı",
-            facebook: fb || "Tapılmadı",
-            fake_info: info || "Məxfi status təyin edilməyib."
+            fullname: name, phone: phone || "Yoxdur", city: city || "Yoxdur", car: car || "Yoxdur",
+            instagram: insta || "Yoxdur", tiktok: tiktok || "Yoxdur", telegram: tg || "Yoxdur", facebook: fb || "Yoxdur",
+            fake_info: info || "Məxfi status qeyd edilməyib."
         }).then(() => {
-            alert("Məlumat uğurla bazaya vuruldu!");
-            // Formu təmizlə
-            document.getElementById('targetName').value = "";
-            document.getElementById('targetPhone').value = "";
-            document.getElementById('targetCity').value = "";
-            document.getElementById('targetCar').value = "";
-            document.getElementById('targetInsta').value = "";
-            document.getElementById('targetTikTok').value = "";
-            document.getElementById('targetTg').value = "";
-            document.getElementById('targetFb').value = "";
-            document.getElementById('fakeResult').value = "";
-        }).catch(err => {
-            console.error(err);
-            alert("Xəta! Firebase linkini admin.html-də düzgün qurduğundan əmin ol.");
+            alert("Məlumat bazaya yazıldı!");
+            clearForm();
         });
+    }
+
+    function loadTargetList() {
+        onValue(ref(database, 'targets'), (snapshot) => {
+            let listRows = document.getElementById('listRows');
+            listRows.innerHTML = "";
+            if(snapshot.exists()){
+                snapshot.forEach((childSnapshot) => {
+                    let key = childSnapshot.key;
+                    let data = childSnapshot.val();
+                    listRows.innerHTML += `
+                        <div class="item-row">
+                            <span><b>${data.fullname}</b> (${data.city})</span>
+                            <button class="del-btn" onclick="deleteTarget('${key}')">SİL</button>
+                        </div>`;
+                });
+            } else {
+                listRows.innerHTML = "<p style='color:#666;'>Bazada heç kim yoxdur.</p>";
+            }
+        });
+    }
+
+    window.deleteTarget = function(key) {
+        if(confirm("Bu şəxsi bazadan tamamilə silmək istəyirsən?")) {
+            remove(ref(database, 'targets/' + key)).then(() => {
+                alert("Şəxs bazadan silindi!");
+            });
+        }
+    }
+
+    function clearForm() {
+        document.getElementById('targetName').value = ""; document.getElementById('targetPhone').value = "";
+        document.getElementById('targetCity').value = ""; document.getElementById('targetCar').value = "";
+        document.getElementById('targetInsta').value = ""; document.getElementById('targetTikTok').value = "";
+        document.getElementById('targetTg').value = ""; document.getElementById('targetFb').value = "";
+        document.getElementById('fakeResult').value = "";
     }
 </script>
 </body>
